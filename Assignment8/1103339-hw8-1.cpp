@@ -271,7 +271,72 @@ void addition( Term *&addend, int &addendSize, Term *adder, int adderSize )
    int k = 0;
 
 
+   if (addendSize == 0)
+   {
+      k = adderSize;
+      for(int a = 0; a < adderSize; a++)
+      {
+         sum[a].coef = adder[a].coef;
+         sum[a].expon = adder[a].expon;
+      }
+   }
+   else if (adderSize == 0)
+   {
+      k = addendSize;
+      for (int a = 0; a < addendSize; a++)
+      {
+         sum[a].coef = addend[a].coef;
+         sum[a].expon = addend[a].expon;
+      }
+   }
+   else
+   {
+       while (i < addendSize && j < adderSize)
+      {
 
+         if(addend[i].expon > adder[j].expon)
+         {
+            sum[k].expon = addend[i].expon;
+            sum[k].coef = addend[i].coef;
+            i++; k++;
+         }
+         else if(addend[i].expon < adder[j].expon)
+         {
+            sum[k].expon = adder[j].expon;
+            sum[k].coef = adder[j].coef;
+            j++; k++;
+         }
+         else if(addend[i].expon == adder[j].expon)
+         {
+            sum[k].coef = addend[i].coef + adder[j].coef;
+            if(sum[k].coef != 0)
+            {
+               sum[k].expon = addend[i].expon;
+               k++;
+            }
+            i++; j++;
+         }
+
+      }
+        if(i == addendSize)
+      {
+         while(j < adderSize)
+         {
+            sum[k].expon = adder[j].expon;
+            sum[k].coef = adder[j].coef;
+            j++; k++;
+         }
+      }
+      else if(j == adderSize)
+      {
+           while (i < addendSize)
+           {
+               sum[k].expon = addend[i].expon;
+               sum[k].coef = addend[i].coef;
+               i++; k++;
+           }
+      }
+   }
 
 
    if( addendSize != k )
@@ -316,10 +381,15 @@ void multiplication( Term *multiplicand, int multiplicandSize,
    // if( multiplicand != 0 && multiplier != 0 )
    if( multiplicandSize != 0 && multiplierSize != 0 )
    {
-
-
-
-
+      for(int i = 0; i < multiplierSize; i++)
+      {
+         for(int j = 0; j < multiplicandSize; j++)
+         {
+            buffer[j].expon = multiplier[i].expon + multiplicand[j].expon;
+            buffer[j].coef = multiplier[i].coef * multiplicand[j].coef;
+         }
+         addition(product, productSize, buffer, bufferSize);
+      }
    }
 
    delete[] buffer;
@@ -348,8 +418,16 @@ void division( Term *dividend, int dividendSize, Term *divisor, int divisorSize,
    Term temp[ arraySize ] = {};
    quotientSize = 0;
 
-
-
+   while(remainderSize != 0 && remainder[0].expon >= divisor[0].expon)
+   {
+      temp[quotientSize].coef = remainder[0].coef / divisor[0].coef;
+      temp[quotientSize].expon = remainder[0].expon - divisor[0].expon;
+      monomial[0].coef = temp[quotientSize].coef;
+      monomial[0].expon = temp[quotientSize].expon;
+      multiplication( divisor, divisorSize, monomial, 1, buffer, bufferSize);
+      subtraction( remainder, remainderSize, buffer, bufferSize);
+      quotientSize++;
+   }
 
 
    quotient = new Term[ quotientSize ];
