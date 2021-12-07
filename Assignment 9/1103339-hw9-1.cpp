@@ -2,9 +2,7 @@
 using namespace::std;
 #include <fstream>
 #include <cstring>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+
 
 // input all words from the file Dictionary.txt, and put them to the array "dictionary"
 void readDictionary( char ( *dictionary )[ 21 ], int &numDicWords );
@@ -133,6 +131,7 @@ void spellCheck1( char *wordToCheck, char ( *dictionary )[ 21 ],
          {
             strcpy_s(result[numResult], 21, words[i]);
             numResult++;
+            break;
          }
       }
 
@@ -162,6 +161,7 @@ void spellCheck2( char *wordToCheck, char ( *dictionary )[ 21 ],
          {
             strcpy_s(result[numResult], 21, words[i]);
             numResult++;
+            break;
          }
       }
 
@@ -191,6 +191,7 @@ void spellCheck3( char *wordToCheck, char ( *dictionary )[ 21 ],
          {
             strcpy_s(result[numResult], 21, words[i]);
             numResult++;
+            break;
          }
 
       }

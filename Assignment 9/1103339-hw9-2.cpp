@@ -125,6 +125,7 @@ void spellCheck1( string wordToCheck, string *dictionary,
           {
               result[numResult] = words[i];
               numResult++;
+              break;
           }
 
       }
@@ -151,6 +152,7 @@ void spellCheck2( string wordToCheck, string *dictionary, int numDicWords, strin
           {
               result[numResult] = words[i];
               numResult++;
+              break;
           }
       }
 
@@ -176,6 +178,7 @@ void spellCheck3( string wordToCheck, string *dictionary, int numDicWords, strin
           {
               result[numResult] = words[i];
               numResult++;
+              break;
           }
 
       }

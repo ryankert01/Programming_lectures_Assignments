@@ -115,6 +115,7 @@ void spellCheck1( string wordToCheck, vector< string > dictionary, vector< strin
           if (buffer1 == buffer2)
           {
               result.push_back(words[i]);
+              break;
           }
 
       }
@@ -136,6 +137,7 @@ void spellCheck2( string wordToCheck, vector< string > dictionary, vector< strin
           if (buffer == wordToCheck)
           {
               result.push_back(words[i]);
+              break;
           }
 
       }
@@ -157,6 +159,7 @@ void spellCheck3( string wordToCheck, vector< string > dictionary, vector< strin
           if (buffer == words[i])
           {
               result.push_back(words[i]);
+              break;
           }
 
       }
