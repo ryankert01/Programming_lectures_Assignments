@@ -2,7 +2,8 @@
 #include<string>
 #include<unordered_map>
 
-//map will automatically ordered the key or map->first, so to speak.
+// map will automatically ordered the key or map->first, so to speak.
+// value is map->second
 
 int main(){
     using uMap = std::unordered_map<std::string, int>;
