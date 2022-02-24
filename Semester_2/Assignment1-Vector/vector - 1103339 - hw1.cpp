@@ -26,7 +26,7 @@ vector::vector( const vector &right )
     size_type rightSize = right.myLast - right.myFirst;
     size_type rightCapacity = right.myEnd - right.myFirst;
     myFirst = new value_type[rightCapacity]();
-    for (int i = 0; i < rightSize; i++) myFirst[i] = *(right.myFirst+i);
+    for (int i = 0; i < rightSize; i++) myFirst[i] = right.myFirst[i];
     myEnd =myLast = myFirst + rightSize;
     // myFirst + rightCapacity;
     
@@ -111,13 +111,15 @@ void vector::resize( const size_type newSize )
          value_type* tempPtr = myFirst;
          //for (int i = 0; i < originalSize; i++) cout << tempPtr[i] << " ";
          myFirst = new value_type[newCapacity+1]();
-         for (int i = 0; i < originalSize; i++) myFirst[i] = *(tempPtr + i);
+         for (int i = 0; i < originalSize; i++) myFirst[i] = tempPtr[i];
          //for (int i = 0; i < originalSize; i++) cout << myFirst[i] << " ";
          myEnd = myFirst + newCapacity;
 
          delete[] tempPtr;
+      }/**/
+      for (size_t i = originalSize; i < capacity(); i++) {
+          myFirst[i] = 0;
       }
-      
 
 
    }
