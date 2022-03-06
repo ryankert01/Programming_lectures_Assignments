@@ -292,6 +292,7 @@ void string::resize(const size_type newSize, const char ch)
                 bx.ptr[i] = temp[i];
             }
             myRes = newMyRes;
+            delete[] temp;
         }
         if (myRes < 16) {
             for (int i = mySize; i < 16; i++) {

@@ -231,6 +231,7 @@ void string::resize( const size_type newSize, const char ch )
          bx.ptr = new value_type[newMyRes + 1]();
          for (size_t i = 0; i < mySize; i++) bx.ptr[i] = temp[i];
          myRes = newMyRes;
+         delete[] temp;
       }
       for (int i = mySize; i < newSize; i++) myPtr()[i] = ch;
       
