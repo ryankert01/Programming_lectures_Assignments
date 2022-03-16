@@ -66,7 +66,8 @@ public:
    vector( const size_type count )
       : myData()
    {
-
+       myData.myFirst = (count == 0 ? nullptr : new value_type[count]());
+       myData.myLast = myData.myEnd = (count == 0 ? nullptr : myData.myFirst + count);
 
 
    }
@@ -77,7 +78,12 @@ public:
    vector( const vector &right )
       : myData()
    {
-
+       size_type rightSize = right.myData.myLast - right.myData.myFirst;
+       size_type rightCap = right.myData.myEnd - right.myData.myFirst;
+       myData.myFirst = new value_type[rightCap]();
+       for (size_t i = 0; i < rightSize; i++) myData.myFirst[i] = right.myData.myFirst[i];
+       myData.myLast = myData.myFirst + rightSize;
+       myData.myEnd = myData.myFirst + rightCap;
 
 
    }
@@ -112,22 +118,18 @@ public:
    {
       if( this != &right ) // avoid self-assignment
       {
-         size_type rightSize = right.size();
-         if( rightSize > capacity() )
-         {
-
-
-
-            size_type newCapacity = capacity() * 3 / 2;
-            if( newCapacity < rightSize )
-               newCapacity = rightSize;
-
-
-
-         }
-
-
-
+          size_type rightSize = right.size();
+          if (rightSize > capacity())
+          {
+              size_type newCapacity = capacity() * 3 / 2;
+              if (newCapacity < rightSize)
+                  newCapacity = rightSize;
+              if (myData.myFirst != nullptr) delete[] myData.myFirst;
+              myData.myFirst = new value_type[newCapacity]();
+              myData.myEnd = myData.myFirst + newCapacity;
+          }
+          for (size_t i = 0; i < right.size(); i++) myData.myFirst[i] = right.myData.myFirst[i];
+          myData.myLast = myData.myFirst + right.size();
       }
 
       return *this; // enables x = y = z, for example
@@ -144,25 +146,23 @@ public:
    // an automatic reallocation of the allocated storage space takes place.
    void resize( const size_type newSize )
    {
-      size_type originalSize = size();
-      if( newSize > originalSize )
-      {
-         if( newSize > capacity() )
-         {
-            size_type newCapacity = capacity() * 3 / 2;
-            if( newCapacity < newSize )
-               newCapacity = newSize;
-
-
-
-         }
-
-
-
-      }
-
-
-
+       size_type originalSize = size();
+       if (newSize > originalSize)
+       {
+           if (newSize > capacity())
+           {
+               size_type newCapacity = capacity() * 3 / 2;
+               if (newCapacity < newSize)
+                   newCapacity = newSize;
+               pointer tempPtr = myData.myFirst;
+               myData.myFirst = new value_type[newCapacity]();
+               for (size_t i = 0; i < originalSize; i++) myData.myFirst[i] = tempPtr[i];
+               delete[] tempPtr;
+               myData.myEnd = myData.myFirst + newCapacity;
+           }
+           for (size_t i = originalSize; i < capacity(); i++) myData.myFirst[i] = 0;
+       }
+       myData.myLast = myData.myFirst + newSize;
    }
 
    // Removes the last element in the vector,
@@ -301,7 +301,13 @@ private:
 template< typename Ty >
 bool operator==( const vector< Ty > &left, const vector< Ty > &right )
 {
-
+    if (left.size() != right.size())
+        return false;
+    for (size_t i = 0; i < right.size(); i++) {
+        if (left[i] != right[i])
+            return false;
+    }
+    return true;
 
 
 }
@@ -422,7 +428,13 @@ template< typename T >
 bool HugeInteger< T >::operator<( const HugeInteger< T > &right ) const
 {
 
-
+    if (integer.size() != right.integer.size())
+        return integer.size() < right.integer.size();
+    for (int i = integer.size() - 1; i >= 0; i--) {
+        if (integer[i] != right.integer[i])
+            return integer[i] < right.integer[i];
+    }
+    return 0;
 
 } // end function operator<
 
@@ -472,73 +484,160 @@ void HugeInteger< T >::operator+=( HugeInteger< T > &op2 )
 template< typename T >
 void HugeInteger< T >::operator-=( HugeInteger< T > &op2 )
 {
-   HugeInteger zero;
+    HugeInteger zero;
 
-   if( *this == op2 )
-   {
-      *this = zero;
-      return;
-   }
+    if (*this == op2)
+    {
+        *this = zero;
+        return;
+    }
 
-   HugeInteger difference( *this );
+    HugeInteger difference(*this);
+
+    using iterVec = typename T::iterator;
+    iterVec it2 = op2.integer.begin();
+    iterVec it1 = difference.integer.begin();
+
+    for (it2 = op2.integer.begin(); it2 != op2.integer.end(); ++it1, ++it2)
+        *it1 -= *it2;
+
+    for (it1 = difference.integer.begin(); it1 != difference.integer.end(); ++it1)
+        while (*it1 < 0 || *it1 > 1000)
+        {
+            *it1 += 10;
+            (*(it1 + 1))--;
+        }
 
 
+    while (*(difference.integer.end() - 1) == 0)
+        difference.integer.pop_back();
 
+    if (difference.leadingZero())
+        cout << "difference has a leading zero!\n";
 
-   if( difference.leadingZero() )
-      cout << "difference has a leading zero!\n";
-
-   *this = difference;
+    *this = difference;
 } // end function operator-
 
 // multiplication operator; HugeInteger< T > * HugeInteger< T >
 template< typename T >
 void HugeInteger< T >::operator*=( HugeInteger< T > &op2 )
 {
-   HugeInteger< T > zero;
-   if( isZero() || op2.isZero() )
-   {
-      *this = zero;
-      return;
-   }
+    HugeInteger< T > zero;
+    if (isZero() || op2.isZero())
+    {
+        *this = zero;
+        return;
+    }
 
-	HugeInteger< T > product( integer.size() + op2.integer.size() );
-   
+    HugeInteger< T > product(integer.size() + op2.integer.size());
+
+    using iterVec = typename T::iterator;
+    iterVec it1 = integer.begin();
+    iterVec it2 = op2.integer.begin();
+    iterVec it3 = product.integer.begin();
+
+    size_t a = 0, b = 0;
+    for (it1 = integer.begin(), a = 0; it1 != integer.end(); it1++, a++)
+        for (it2 = op2.integer.begin(), b = 0; it2 != op2.integer.end(); it2++, b++) {
+            *(it3 + a + b) += *it1 * *it2;
+        }
+
+    for (it3 = product.integer.begin(); it3 != product.integer.end(); it3++) {
+        if (*it3 > 9) {
+            *(it3 + 1) += *it3 / 10;
+            *it3 %= 10;
+        }
+
+    }
+
+    while (*(product.integer.end() - 1) == 0) {
+        product.integer.pop_back();
+    }
 
 
 
-   if( product.leadingZero() )
-      cout << "product has a leading zero!\n";
+    if (product.leadingZero())
+        cout << "product has a leading zero!\n";
 
-   *this = product;
+    *this = product;
 } // end function operator*
 
 // division operator; HugeInteger< T > / HugeInteger< T > provided that the divisor is not equal to 0
 template< typename T >
 HugeInteger< T > HugeInteger< T >::operator/( HugeInteger< T > &op2 )
 {
-   HugeInteger< T > zero;
-   if( *this < op2 )
-      return zero;
+    HugeInteger< T > zero;
+    if (*this < op2)
+        return zero;
 
+    HugeInteger< T > remainder(*this);
 
+    HugeInteger< T > buffer(op2);
+    //ten
+    HugeInteger< T > ten(2);
+    ten.convert(10);
+    size_type n = remainder.size() - buffer.size();
+    for (size_t i = 0; i < n; i++)
+        buffer *= ten;
 
+    HugeInteger< T > quotient(integer.size() - op2.integer.size());
 
-   return quotient;
+    if (remainder < buffer)
+        buffer.divideByTen();
+    else
+        quotient.integer.resize(quotient.integer.size() + 1);
+    for (int k = quotient.size() - 1; k >= 0; k--) {
+        while (buffer <= remainder) {
+            remainder -= buffer;
+            quotient.integer[k]++;
+            if (remainder.isZero()) {
+                return quotient;
+            }
+        }
+        buffer.divideByTen();
+    }
+
+    return quotient;
 } // end function operator/
 
 // modulus operator; HugeInteger< T > % HugeInteger< T > provided that the divisor is not equal to 0
 template< typename T >
 HugeInteger< T > HugeInteger< T >::operator%( HugeInteger< T > &op2 )
 {
-   HugeInteger< T > zero;
-   if( *this < op2 )
-      return zero;
+    HugeInteger< T > zero;
+    if (*this < op2)
+        return zero;
+
+    HugeInteger< T > remainder(*this);
+
+    HugeInteger< T > ten(2);
+    ten.convert(10);
+
+    HugeInteger< T > quotient(integer.size() - op2.integer.size());
+
+    size_type n = integer.size() - op2.integer.size();
+    HugeInteger< T > buffer(op2);
+    for (size_t i = 0; i < n; i++)
+        buffer *= ten;
+
+    quotient.integer.resize(integer.size() - op2.integer.size());
+    if (remainder < buffer)
+        buffer.divideByTen();
+    else
+        quotient.integer.resize(quotient.integer.size() + 1);
+    for (int k = quotient.size() - 1; k >= 0; k--) {
+        while (buffer <= remainder) {
+            remainder -= buffer;
+            quotient.integer[k]++;
+            if (remainder.integer == zero.integer)
+                return remainder;
+        }
+        buffer.divideByTen();
+    }
 
 
 
-
-   return remainder;
+    return remainder;
 }
 
 // overloaded prefix increment operator 
