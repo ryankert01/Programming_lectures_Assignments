@@ -292,7 +292,7 @@ bool efficientAssignment( list< int > &list1, list< int > &list2 )
    // node i of list1 after the excution of list1 = list2
    // i.e., there is no memory allocation during the excution of
    // list1 = list2
-
+   delete[] addresses;
    return true;
 }
 
