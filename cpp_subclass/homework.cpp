@@ -18,7 +18,7 @@ public:
 		sharedmoney = 0;
 	}
 	void costmoney(int cost) {
-		money -= sharedmoney;
+		money -= cost;
 	}
 	void depositmoney(int th) {
 		money += th * 9 / 10;
@@ -34,10 +34,11 @@ private:
 	int money;
 	
 };
+int Moneybag::sharedmoney;//!important
 
 int main() {
 	Moneybag A(100);
-	Moneybag B(100);
+	Moneybag B(1000);
 	A.depositmoney(1000);
 	B.depositmoney(100);
 	A.costmoney(500);
