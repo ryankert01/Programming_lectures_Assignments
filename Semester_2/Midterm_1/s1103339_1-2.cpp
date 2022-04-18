@@ -420,7 +420,14 @@ HugeInteger< T > HugeInteger< T >::square()
 
     for (int i = 0; i < integer.size(); i++)
         for (int j = 0; j < integer.size(); j++)
-            { if (square.integer[i + j] > 2000000000){square.integer[i + j + 1] += square.integer[i + j] / 10000;square.integer[i + j] %= 10000;}square.integer[i + j] += integer[i] * integer[j];}//modiflied
+        { 
+            if (square.integer[i + j] > 2000000000)
+            {
+                square.integer[i + j + 1] += square.integer[i + j] / 10000;
+                square.integer[i + j] %= 10000;
+            }
+            square.integer[i + j] += integer[i] * integer[j];
+        }//modified
     for (int i = 0; i < squareSize - 1; i++)
         if (square.integer[i] > 10000)
         {
