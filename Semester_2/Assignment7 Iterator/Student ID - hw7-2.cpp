@@ -97,8 +97,12 @@ public:
    list( const list &right )
       : myData()
    {
+      myData.myHead = new node;
+      myData.myHead->myVal = Ty();
+      myData.myHead->prev = myData.myHead->next = myData.myHead;
 
-
+      for (iterator it = right.myData.myHead->next; it != right.myData.myHead; it = it->next)
+          push_back(it->myVal);
 
    }
 
@@ -110,8 +114,16 @@ public:
 
    list& operator=( const list &right )
    {
-      if( this != &right )
-
+       if (this != &right)
+       {
+           while (size() < right.size())
+               push_back(Ty());
+           while (size() > right.size())
+               pop_back();
+           iterator it1 = begin();
+           for (iterator it = right.begin(); it != right.end(); it = it->next, it1 = it1->next)
+               it1->myVal = it->myVal;
+       }
 
 
       return *this;
@@ -174,7 +186,12 @@ public:
 
    void push_back( const Ty &val )
    {
-
+       myData.myHead->prev->next = new node;
+       myData.myHead->prev->next->prev = myData.myHead->prev;
+       myData.myHead->prev = myData.myHead->prev->next;
+       myData.myHead->prev->myVal = val;
+       myData.mySize++;
+       myData.myHead->prev->next = myData.myHead;
 
 
    }
@@ -183,7 +200,10 @@ public:
    {
       if( myData.mySize > 0 )
       {
-
+          myData.myHead->prev = myData.myHead->prev->prev;
+          delete myData.myHead->prev->next;
+          myData.myHead->prev->next = myData.myHead;
+          myData.mySize--;
 
 
       }
@@ -193,8 +213,15 @@ public:
    {
       if( myData.mySize != 0 ) // the list is not empty
       {
-
-
+          iterator itPrev;
+          for (iterator it = myData.myHead->next; it != myData.myHead; )
+          {
+              itPrev = it; 
+              it = it->next; 
+              delete itPrev;
+          }
+          myData.myHead->next = myData.myHead->prev = myData.myHead;
+          myData.mySize = 0;
 
       }
    }
@@ -207,7 +234,14 @@ private:
 template< typename Ty >
 bool operator==( list< Ty > &left, list< Ty > &right )
 {
-
+    if (left.size() != right.size())
+        return false;
+    typename list< Ty >::iterator it = left.begin();
+    typename list< Ty >::iterator it1 = right.begin();
+    for (; it != left.end(); it = it->next, it1 = it1->next)
+        if (it->myVal != it1->myVal)
+            return false;
+    return true;
 
 
 }
@@ -299,8 +333,18 @@ bool HugeInteger< T >::operator==( HugeInteger &right )
 template< typename T >
 bool HugeInteger< T >::operator<( HugeInteger &right )
 {
+    if (integer.size() != right.integer.size())
+        return integer.size() < right.integer.size();
 
+    typename T::iterator it1 = integer.end()->prev;
+    typename T::iterator it2 = right.integer.end()->prev;
 
+    for (; it1 != integer.begin()->prev; it1 = it1->prev, it2= it2->prev)
+    {
+        if (it1->myVal != it2->myVal)
+            return it1->myVal < it2->myVal;
+    }
+    return false;
 
 } // end function operator<
 
@@ -321,7 +365,29 @@ HugeInteger< T > HugeInteger< T >::square( value_type powerTwo )
    size_t squareSize = 2 * integer.size();
    HugeInteger square( squareSize );
 
+   typename T::iterator it1 = integer.begin();
+   typename T::iterator it2 = integer.begin();
+   typename T::iterator sqIt = square.integer.begin();
+   typename T::iterator iterTemp = square.integer.begin();
 
+   for (it1 = integer.begin(); it1 != integer.end(); it1 = it1->next, iterTemp = iterTemp->next)
+   {
+       sqIt = iterTemp;
+       for (it2 = integer.begin(); it2 != integer.end(); it2 = it2->next, sqIt = sqIt->next)
+       {
+           sqIt->myVal += it1->myVal * it2->myVal;
+       }
+   }
+
+   for (sqIt = square.integer.begin(); sqIt != square.integer.end(); sqIt = sqIt->next)
+       if (sqIt->myVal >= powerTwo)
+       {
+           sqIt->next->myVal += sqIt->myVal / powerTwo;
+           sqIt->myVal %= powerTwo;
+       }
+
+   while (square.integer.back() == 0)
+       square.integer.pop_back();
 
 
    return square;
@@ -337,7 +403,42 @@ HugeInteger< T > HugeInteger< T >::squareRoot( value_type powerTwo )
    size_type sqrtSize = ( integer.size() + 1 ) / 2;
    HugeInteger sqrt( sqrtSize );
 
+   HugeInteger< T > low(sqrtSize);
+   HugeInteger< T > high(sqrtSize);
 
+   using iter1 = typename T::iterator;
+   iter1 lowIt = low.integer.end()->prev;
+   iter1 highIt = high.integer.end()->prev;
+   iter1 sqrtIt = sqrt.integer.end()->prev;
+   for (; highIt != high.integer.begin()->prev; highIt = highIt->prev, lowIt = lowIt->prev, sqrtIt = sqrtIt->prev)
+   {
+       highIt->myVal = powerTwo;
+       lowIt->myVal = 0;
+       while (lowIt->myVal <= highIt->myVal)
+       {
+           sqrtIt->myVal = (highIt->myVal + lowIt->myVal) / 2;
+           HugeInteger< T > sqrtMiddle(sqrt.square(powerTwo));
+
+
+
+           if (sqrtMiddle == *this)
+               return sqrt;
+           else if (*this < sqrtMiddle)
+           {
+               highIt->myVal = sqrtIt->myVal;
+               continue;
+           }
+           else
+               lowIt->myVal = sqrtIt->myVal;
+           if (lowIt->myVal + 1 == highIt->myVal)
+           {
+               sqrtIt->myVal = lowIt->myVal;
+               break;
+           }
+
+       }
+
+   }
 
 
    return sqrt;
