@@ -144,7 +144,7 @@ public:
             delete[] temp;
             myData.myEnd = myData.myFirst + newCapacity;
          }
-         for (int i = originalSize; i < newSize; i++)
+         for (size_t i = originalSize; i < newSize; i++)
              myData.myFirst[i] = 0;
       }
       myData.myLast = myData.myFirst + newSize;
@@ -317,15 +317,15 @@ bool HugeInteger< T >::operator<( HugeInteger &right )
     if (integer.size() != right.integer.size())
         return integer.size() < right.integer.size();
 
-    typename T::iterator it1 = integer.begin();
-    typename T::iterator it2 = right.integer.begin();
+    typename T::iterator it1 = integer.end()-1;
+    typename T::iterator it2 = right.integer.end()-1;
 
-    for (; it1 != integer.end(); it1++, it2++)
+    for (; it1 != integer.begin()-1; it1--, it2--)
     {
         if (*it1 != *it2)
             return *it1 < *it2;
     }
-
+    return false;
 
 } // end function operator<
 
@@ -344,29 +344,32 @@ HugeInteger< T > HugeInteger< T >::square( value_type powerTwo )
       return zero;
 
    size_t squareSize = 2 * integer.size();
-   HugeInteger square( squareSize );
-
-
+   
+   HugeInteger square1( squareSize );
    typename T::iterator it1 = integer.begin();
    typename T::iterator it2 = integer.begin();
-   typename T::iterator sqIt = square.integer.begin();
+   typename T::iterator sqIt = square1.integer.begin();
 
    for (int i = 0; i < integer.size(); i++)
        for (int j = 0; j < integer.size(); j++)
+       {
            *(sqIt + i + j ) += *(it1 + i) * *(it2 + j);
+       }
+
 
    
-   for(sqIt = square.integer.begin(); sqIt != square.integer.end(); sqIt++)
-       if (*sqIt > powerTwo)
+   for(sqIt = square1.integer.begin(); sqIt != square1.integer.end(); sqIt++)
+       if (*sqIt >= powerTwo)
        {
            *(sqIt + 1) += *sqIt / powerTwo;
            *sqIt %= powerTwo;
        }
 
-   while (square.integer.back() == 0)
-       square.integer.pop_back();
+   while (square1.integer.back() == 0)
+       square1.integer.pop_back();
 
-   return square;
+
+   return square1;
 }
 
 template< typename T >
@@ -391,24 +394,55 @@ HugeInteger< T > HugeInteger< T >::squareRoot( value_type powerTwo )
    iter1 sqrtIt = sqrt.integer.end() - 1;
    for (; highIt != high.integer.begin() - 1; highIt--, lowIt--, sqrtIt--)
    {
-       *highIt = powerTwo - 1;
+       *highIt = powerTwo;
        *lowIt = 0;
        while (*lowIt <= *highIt)
        {
            *sqrtIt = (*highIt + *lowIt) / 2;
            HugeInteger< T > sqrtMiddle(sqrt.square(powerTwo));
+          /*
+           cout << "sqrt:       " << sqrt << endl; 
+           cout << "now sqrt:   " << *sqrtIt << endl;
+           cout << "highIt:     " << *highIt << endl;
+           cout << "lowIt :     " << *lowIt << endl;
+           cout << "this:       " << *this << endl;
+           cout << "sqrtMiddle: " << sqrtMiddle << endl;*/
+           
+           /*
+           typename T::iterator it1 = integer.end() - 1;
+           typename T::iterator it2 = sqrtMiddle.integer.end() - 1;
+
+           for (; it1 != integer.begin() - 1; it1--, it2--)
+           {
+               if (*it1 != *it2)
+               {
+                   cout << "comparison: this, middle: ";
+                   cout << *it1 << " ";
+                   cout << *it2 << endl;
+                   break;
+               }
+           }cout << endl;*/
+
+
+
            if (sqrtMiddle == *this)
                return sqrt;
-           if (*this < sqrtMiddle)
+           else if (*this < sqrtMiddle)
+           {
                *highIt = *sqrtIt;
+               continue;
+           }
            else
                *lowIt = *sqrtIt;
-           if (*lowIt + 1 == *highIt)
+           if ((*lowIt + 1) == *highIt)
            {
                *sqrtIt = *lowIt;
                break;
            }
+           
        }
+       //cout << "-------next--------\n";
+       
    }
 
 
