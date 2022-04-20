@@ -1107,7 +1107,7 @@ bool HugeInteger< T >::operator<( HugeInteger &right )
     typename T::iterator it1 = integer.end(); it1--;
     typename T::iterator it2 = right.integer.end(); it2--;
 
-    for (; it1 != integer.end() ;it1--, it2--)
+    for (; it1 != --integer.begin() ;it1--, it2--)
     {
         if (*it1 != *it2)
             return *it1 < *it2;
@@ -1186,7 +1186,7 @@ HugeInteger< T > HugeInteger< T >::squareRoot( value_type powerTwo )
    iter1 lowIt = low.integer.end(); lowIt--;
    iter1 highIt = high.integer.end(); highIt--;
    iter1 sqrtIt = sqrt.integer.end(); sqrtIt--;
-   for (; highIt != high.integer.end(); highIt--, lowIt--, sqrtIt--)
+   for (; highIt != --high.integer.begin(); highIt--, lowIt--, sqrtIt--)
    {
        *highIt = powerTwo;
        *lowIt = 0;
@@ -1194,27 +1194,7 @@ HugeInteger< T > HugeInteger< T >::squareRoot( value_type powerTwo )
        {
            *sqrtIt = (*highIt + *lowIt) / 2;
            HugeInteger< T > sqrtMiddle(sqrt.square(powerTwo));
-           /*
-            cout << "sqrt:       " << sqrt << endl;
-            cout << "now sqrt:   " << *sqrtIt << endl;
-            cout << "highIt:     " << *highIt << endl;
-            cout << "lowIt :     " << *lowIt << endl;
-            cout << "this:       " << *this << endl;
-            cout << "sqrtMiddle: " << sqrtMiddle << endl;*/
 
-            /*
-            typename T::iterator it1 = integer.end() - 1;
-            typename T::iterator it2 = sqrtMiddle.integer.end() - 1;
-            for (; it1 != integer.begin() - 1; it1--, it2--)
-            {
-                if (*it1 != *it2)
-                {
-                    cout << "comparison: this, middle: ";
-                    cout << *it1 << " ";
-                    cout << *it2 << endl;
-                    break;
-                }
-            }cout << endl;*/
 
 
 
@@ -1234,7 +1214,6 @@ HugeInteger< T > HugeInteger< T >::squareRoot( value_type powerTwo )
            }
 
        }
-       //cout << "-------next--------\n";
 
    }
 
@@ -1307,7 +1286,7 @@ void solution2()
 template< typename T >
 void solution1()
 {
-   int choice = 2;
+   int choice = 1;
    switch( choice )
    {
    case 1:
@@ -1324,7 +1303,7 @@ void solution1()
 
 int main()
 {
-   int choice = 6;
+   int choice = 1;
    switch( choice )
    {
    case 1:
