@@ -469,7 +469,8 @@ public:
    vector( const size_type count )
       : myData()
    {
-
+       myData.myFirst = new value_type[count]();
+       myData.myLast = myData.myEnd = myData.myFirst + count;
 
 
    }
@@ -477,7 +478,12 @@ public:
    vector( const vector &right )
       : myData()
    {
-
+       myData.myFirst = new value_type[right.size()]();
+       for (int i = 0; i < right.size(); i++)
+       {
+           myData.myFirst[i] = right.myData.myFirst[i];
+       }
+       myData.myLast = myData.myEnd = myData.myFirst + right.size();
 
 
    }
@@ -502,18 +508,18 @@ public:
          size_type rightSize = right.size();
          if( rightSize > capacity() )
          {
-
-
-
             size_type newCapacity = capacity() * 3 / 2;
             if( newCapacity < rightSize )
                newCapacity = rightSize;
-
-
-
+            if (myData.myFirst != nullptr)
+                delete[] myData.myFirst;
+            myData.myFirst = new value_type[newCapacity]();
+            myData.myEnd = myData.myFirst + newCapacity;
          }
 
-
+         for (int i = 0; i < rightSize; i++)
+             myData.myFirst[i] = right.myData.myFirst[i];
+         myData.myLast = myData.myFirst + rightSize;
 
       }
 
@@ -522,25 +528,25 @@ public:
 
    void resize( const size_type newSize )
    {
-      size_type originalSize = size();
-      if( newSize > originalSize )
-      {
-         if( newSize > capacity() )
-         {
-            size_type newCapacity = capacity() * 3 / 2;
-            if( newCapacity < newSize )
-               newCapacity = newSize;
-
-
-
-         }
-
-
-
-      }
-
-
-
+       size_type originalSize = size();
+       if (newSize > originalSize)
+       {
+           if (newSize > capacity())
+           {
+               size_type newCapacity = capacity() * 3 / 2;
+               if (newCapacity < newSize)
+                   newCapacity = newSize;
+               pointer temp = myData.myFirst;
+               myData.myFirst = new value_type[newCapacity]();
+               for (int i = 0; i < originalSize; i++)
+                   myData.myFirst[i] = temp[i];
+               delete[] temp;
+               myData.myEnd = myData.myFirst + newCapacity;
+           }
+           for (size_t i = originalSize; i < newSize; i++)
+               myData.myFirst[i] = 0;
+       }
+       myData.myLast = myData.myFirst + newSize;
    }
 
    void pop_back()
@@ -618,7 +624,16 @@ private:
 template< typename Ty >
 bool operator==( vector< Ty > &left, vector< Ty > &right )
 {
+    if (left.size() != right.size())
+        return false; // vectors of different number of elements
 
+    typename vector< Ty >::iterator it1 = left.begin();
+    typename vector< Ty >::iterator it2 = right.begin();
+    for (; it1 != left.end(); ++it1, ++it2)
+        if (*it1 != *it2)
+            return false; // vector contents are not equal
+
+    return true; // vector contents are equal
 
 
 }
@@ -846,7 +861,12 @@ public:
    list( const list &right )
       : myData()
    {
+       myData.myHead = new node;
+       myData.myHead->myVal = Ty();
+       myData.myHead->prev = myData.myHead->next = myData.myHead;
 
+       for (iterator it = right.myData.myHead->next; it != right.myData.myHead; it++)
+           push_back(it.ptr->myVal);
 
 
    }
@@ -860,7 +880,15 @@ public:
    list& operator=( const list &right )
    {
       if( this != &right )
-
+      {
+          while (size() < right.size())
+              push_back(Ty());
+          while (size() > right.size())
+              pop_back();
+          iterator it1 = begin();
+          for (iterator it = right.begin(); it != right.end(); it = it->next, it1 = it1->next)
+              it1->myVal = it->myVal;
+      }
 
 
       return *this;
@@ -933,7 +961,12 @@ public:
 
    void push_back( const Ty &val )
    {
-
+       myData.myHead->prev->next = new node;
+       myData.myHead->prev->next->prev = myData.myHead->prev;
+       myData.myHead->prev = myData.myHead->prev->next;
+       myData.myHead->prev->myVal = val;
+       myData.mySize++;
+       myData.myHead->prev->next = myData.myHead;
 
 
    }
@@ -942,7 +975,10 @@ public:
    {
       if( myData.mySize > 0 )
       {
-
+          myData.myHead->prev = myData.myHead->prev->prev;
+          delete myData.myHead->prev->next;
+          myData.myHead->prev->next = myData.myHead;
+          myData.mySize--;
 
 
       }
@@ -952,8 +988,15 @@ public:
    {
       if( myData.mySize != 0 ) // the list is not empty
       {
-
-
+          iterator itPrev;
+          for (iterator it = myData.myHead->next; it != myData.myHead; )
+          {
+              itPrev = it;
+              it++;
+              delete itPrev.ptr;
+          }
+          myData.myHead->next = myData.myHead->prev = myData.myHead;
+          myData.mySize = 0;
 
       }
    }
@@ -966,7 +1009,14 @@ private:
 template< typename Ty >
 bool operator==( list< Ty > &left, list< Ty > &right )
 {
-
+    if (left.size() != right.size())
+        return false;
+    typename list< Ty >::iterator it = left.begin();
+    typename list< Ty >::iterator it1 = right.begin();
+    for (; it != left.end(); it++, it1++)
+        if (it.ptr->myVal != it1.ptr->myVal)
+            return false;
+    return true;
 
 
 }
@@ -1051,7 +1101,18 @@ bool HugeInteger< T >::operator==( HugeInteger &right )
 template< typename T >
 bool HugeInteger< T >::operator<( HugeInteger &right )
 {
+    if (integer.size() != right.integer.size())
+        return integer.size() < right.integer.size();
 
+    typename T::iterator it1 = integer.end(); it1--;
+    typename T::iterator it2 = right.integer.end(); it2--;
+
+    for (; it1 != integer.end() ;it1--, it2--)
+    {
+        if (*it1 != *it2)
+            return *it1 < *it2;
+    }
+    return false;
 
 
 } // end function operator<
@@ -1071,12 +1132,38 @@ HugeInteger< T > HugeInteger< T >::square( value_type powerTwo )
       return zero;
 
    size_t squareSize = 2 * integer.size();
-   HugeInteger square( squareSize );
+   HugeInteger square1( squareSize );
+
+   typename T::iterator it1 = integer.begin();
+   typename T::iterator it2 = integer.begin();
+   typename T::iterator sqIt = square1.integer.begin();
+   typename T::iterator temp = square1.integer.begin();
 
 
+   for (; it1 != integer.end(); it1++, temp++)
+   {
+       sqIt = temp;
+       for (it2 = integer.begin(); it2 != integer.end(); it2++, sqIt++)
+       {
+           *sqIt += *it1 * *it2;
+       }
+   }
 
 
-   return square;
+   temp = square1.integer.begin(); temp++;
+   for (sqIt = square1.integer.begin(); temp != square1.integer.end(); sqIt++, temp++)
+       if (*sqIt >= powerTwo)
+       {
+           
+           *temp += *sqIt / powerTwo;
+           *sqIt %= powerTwo;
+       }
+
+   while (square1.integer.back() == 0)
+       square1.integer.pop_back();
+
+
+   return square1;
 }
 
 template< typename T >
@@ -1089,7 +1176,67 @@ HugeInteger< T > HugeInteger< T >::squareRoot( value_type powerTwo )
    size_type sqrtSize = ( integer.size() + 1 ) / 2;
    HugeInteger sqrt( sqrtSize );
 
+   HugeInteger< T > low(sqrtSize);
+   HugeInteger< T > high(sqrtSize);
 
+
+
+
+   using iter1 = typename T::iterator;
+   iter1 lowIt = low.integer.end(); lowIt--;
+   iter1 highIt = high.integer.end(); highIt--;
+   iter1 sqrtIt = sqrt.integer.end(); sqrtIt--;
+   for (; highIt != high.integer.end(); highIt--, lowIt--, sqrtIt--)
+   {
+       *highIt = powerTwo;
+       *lowIt = 0;
+       while (*lowIt <= *highIt)
+       {
+           *sqrtIt = (*highIt + *lowIt) / 2;
+           HugeInteger< T > sqrtMiddle(sqrt.square(powerTwo));
+           /*
+            cout << "sqrt:       " << sqrt << endl;
+            cout << "now sqrt:   " << *sqrtIt << endl;
+            cout << "highIt:     " << *highIt << endl;
+            cout << "lowIt :     " << *lowIt << endl;
+            cout << "this:       " << *this << endl;
+            cout << "sqrtMiddle: " << sqrtMiddle << endl;*/
+
+            /*
+            typename T::iterator it1 = integer.end() - 1;
+            typename T::iterator it2 = sqrtMiddle.integer.end() - 1;
+            for (; it1 != integer.begin() - 1; it1--, it2--)
+            {
+                if (*it1 != *it2)
+                {
+                    cout << "comparison: this, middle: ";
+                    cout << *it1 << " ";
+                    cout << *it2 << endl;
+                    break;
+                }
+            }cout << endl;*/
+
+
+
+           if (sqrtMiddle == *this)
+               return sqrt;
+           else if (*this < sqrtMiddle)
+           {
+               *highIt = *sqrtIt;
+               continue;
+           }
+           else
+               *lowIt = *sqrtIt;
+           if ((*lowIt + 1) == *highIt)
+           {
+               *sqrtIt = *lowIt;
+               break;
+           }
+
+       }
+       //cout << "-------next--------\n";
+
+   }
 
 
    return sqrt;
@@ -1177,7 +1324,7 @@ void solution1()
 
 int main()
 {
-   int choice = 3;
+   int choice = 6;
    switch( choice )
    {
    case 1:
