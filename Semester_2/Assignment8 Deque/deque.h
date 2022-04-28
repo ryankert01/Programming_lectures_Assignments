@@ -343,7 +343,10 @@ public:
    deque( const deque &right )
       : myData()
    {
-
+       //from myOff to something that we travesed mySize
+       const_iterator it1 = right.begin();
+       for (; it1 != right.end(); it1++)
+           push_back(*it1);
 
 
    }
@@ -484,10 +487,10 @@ public:
       {
           myData.map = new pointer[8]();
           myData.mapSize = 8;
-          myData.myOff = 0;
-          myData.mySize = 1;
-          myData.map[0] = new value_type[4]();
-          myData.map[0][0] = val;
+          myData.myOff = 32;
+          myData.mySize = 0;
+          myData.map[7] = new value_type[4]();
+          myData.map[7][3] = val;
       }
       else
       {
@@ -497,19 +500,37 @@ public:
             doubleMapSize();
             newFront = ( myData.myOff - 1 ) % ( 4 * myData.mapSize );
          }
-
+         int row = newFront / 4;
+         int col = newFront % 4;
+         if (myData.map[row] == nullptr)
+             myData.map[row] = new value_type[4]();
+         myData.map[row][col] = val;
 
 
       }
-
-
+      if (myData.myOff == 0)
+          myData.myOff = 4 * myData.mapSize;
+      myData.myOff--;
+      myData.mySize++;
 
    }
 
    // erase element at beginning
    void pop_front()
    {
-      if( --myData.mySize == 0 )
+      size_type front = myData.myOff % ( 4 * myData.mapSize );
+      if( front % 4 == 3 )
+      {
+         size_type back = ( myData.myOff + myData.mySize - 1 ) % ( 4 * myData.mapSize );
+         if( back >= front - 3 && back < front )
+         {
+            delete[] myData.map[ ( front - 3 ) / 4 ];
+            myData.map[ ( front - 3 ) / 4 ] = nullptr;
+         }
+      }
+
+      --myData.mySize;
+      if( myData.mySize == 0 )
          myData.myOff = 0;
       else
          ++myData.myOff;
@@ -522,27 +543,31 @@ public:
       {
           myData.map = new pointer[8]();
           myData.mapSize = 8;
-          myData.myOff = 1;
-          myData.mySize = 1;
-          myData.map[7] = new value_type[4]();
-          myData.map[7][3] = val;
-
-
+          myData.myOff = 0;
+          myData.mySize = 0;
+          myData.map[0] = new value_type[4]();
+          myData.map[0][0] = val;
       }
       else
       {
          size_type newBack = ( myData.myOff + myData.mySize ) % ( 4 * myData.mapSize );
-         if( newBack % 4 == 0 && myData.mySize >= 4 * ( myData.mapSize - 1 ) )
+         if (newBack % 4 == 0 && myData.mySize >= 4 * (myData.mapSize - 1))
          {
-            doubleMapSize();
-            newBack = myData.myOff + myData.mySize;
+             doubleMapSize();
+             newBack = myData.myOff + myData.mySize;
          }
          else
-
+             ;
+         int row, col;
+         row = newBack / 4;
+         col = newBack % 4;
+         if (myData.map[row] == nullptr)
+             myData.map[row] = new value_type[4]();
+         myData.map[row][col] = val;
 
 
       }
-
+      myData.mySize++;
 
 
    }
@@ -550,8 +575,20 @@ public:
    // erase element at end
    void pop_back()
    {
-      if( --myData.mySize == 0 )
-         myData.myOff = 0;
+       size_type back = (myData.myOff + myData.mySize - 1) % (4 * myData.mapSize);
+       if (back % 4 == 0)
+       {
+           size_type front = myData.myOff % (4 * myData.mapSize);
+           if (front > back&& front <= back + 3)
+           {
+               delete[] myData.map[back / 4];
+               myData.map[back / 4] = nullptr;
+           }
+       }
+
+       --myData.mySize;
+       if (myData.mySize == 0)
+           myData.myOff = 0;
    }
 
    // erase all
@@ -571,6 +608,26 @@ public:
       }
    }
 
+   void print()
+   {
+       cout << "----------INFO-------------\n";
+       cout << "mySize:  " << myData.mySize << endl;
+       cout << "myOff:   " << myData.myOff << endl;
+       cout << "----------BEGIN------------\n\n";
+       for (int i = 0; i < myData.mapSize; i++)
+       {    
+           if (myData.map[i] != nullptr)
+           {
+               for (int j = 0; j < 4; j++)
+                   cout << myData.map[i][j] << " ";
+               cout << endl;
+           }
+           else
+               cout << "-----nullptr-----\n";
+       }
+       cout << "\n----------END--------------\n";
+   }
+
 private:
 
    // determine block from offset
@@ -584,10 +641,36 @@ private:
    {
        MapPtr temp = myData.map;
        myData.map = new pointer[myData.mapSize * 2]();
-       myData.mapSize *= 2;
+       
        
 
+       //has to be modified by its overflowing
+       
+       //start form myOff to (mySize+myOff)%(mapsize*4) for temp
+       //from top to down quarterly-ish
+       int j = myData.myOff / 4;
+       int row;
+     //  for(myOff/4  to  (mySize + myOff) % (mapsize * 4)/4)
+/*
+       for (row = myData.myOff / 4; row != ((myData.mySize + myData.myOff) % ( myData.mapSize * 4)) / 4; row %= myData.mapSize)
+           myData.map[j++] = temp[row++];*/
 
+
+       for (row = myData.myOff / 4; temp[row] != nullptr; )
+       {
+           
+           myData.map[j++] = temp[row];
+           temp[row++] = nullptr;
+           row %= myData.mapSize;
+       }
+
+
+
+        myData.mapSize *= 2;
+
+
+
+       delete[] temp;
 
    }
 
