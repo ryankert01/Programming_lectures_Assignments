@@ -485,12 +485,25 @@ public:
    {
       if( myData.mySize == 0 )
       {
-          myData.map = new pointer[8]();
-          myData.mapSize = 8;
-          myData.myOff = 32;
-          myData.mySize = 0;
-          myData.map[7] = new value_type[4]();
-          myData.map[7][3] = val;
+          
+          if (myData.mapSize == 0 ){
+              if(myData.map == nullptr)
+                 myData.map = new pointer[8]();
+              myData.mapSize = 8;
+              myData.myOff = 32;
+          }
+          
+          size_type newFront = (myData.myOff - 1) % (4 * myData.mapSize);
+          if (newFront % 4 == 3 && myData.mySize >= 4 * (myData.mapSize - 1))
+          {
+              doubleMapSize();
+              newFront = (myData.myOff - 1) % (4 * myData.mapSize);
+          }
+          int row = newFront / 4;
+          int col = newFront % 4;
+          if (myData.map[row] == nullptr)
+              myData.map[row] = new value_type[4]();
+          myData.map[row][col] = val;
       }
       else
       {
@@ -509,7 +522,9 @@ public:
 
       }
       if (myData.myOff == 0)
-          myData.myOff = 4 * myData.mapSize;
+          myData.myOff = 4 * myData.mapSize;/**/
+      if(myData.myOff > myData.mapSize*4)
+         myData.myOff %= ( 4 * myData.mapSize );
       myData.myOff--;
       myData.mySize++;
 
@@ -541,8 +556,15 @@ public:
    {
       if( myData.mySize == 0 )
       {
-          myData.map = new pointer[8]();
-          myData.mapSize = 8;
+          
+          if (myData.mapSize == 0) {
+              myData.mapSize = 8;
+              if (myData.map == nullptr)
+                myData.map = new pointer[8]();
+          }
+          
+
+
           myData.myOff = 0;
           myData.mySize = 0;
           myData.map[0] = new value_type[4]();
@@ -557,7 +579,8 @@ public:
              newBack = myData.myOff + myData.mySize;
          }
          else
-             ;
+            if (myData.myOff >= 4 * myData.mapSize)
+                myData.myOff %= 4 * myData.mapSize;
          int row, col;
          row = newBack / 4;
          col = newBack % 4;
@@ -611,6 +634,7 @@ public:
    void print()
    {
        cout << "----------INFO-------------\n";
+       cout << "mapSize: " << myData.mapSize << endl;
        cout << "mySize:  " << myData.mySize << endl;
        cout << "myOff:   " << myData.myOff << endl;
        cout << "----------BEGIN------------\n\n";
@@ -628,6 +652,12 @@ public:
        cout << "\n----------END--------------\n";
    }
 
+   void printDeque(){
+      for(iterator it = begin(); it != end();  it++)
+         cout << *it << " " ;
+         cout << endl;
+   }
+
 private:
 
    // determine block from offset
@@ -643,9 +673,10 @@ private:
        myData.map = new pointer[myData.mapSize * 2]();
        
        
-
+       int map = myData.mapSize;
+       myData.mapSize *= 2;
        //has to be modified by its overflowing
-       
+      myData.myOff %= (4*myData.mapSize);
        //start form myOff to (mySize+myOff)%(mapsize*4) for temp
        //from top to down quarterly-ish
        int j = myData.myOff / 4;
@@ -661,12 +692,12 @@ private:
            
            myData.map[j++] = temp[row];
            temp[row++] = nullptr;
-           row %= myData.mapSize;
+           row %= map;
        }
 
 
 
-        myData.mapSize *= 2;
+
 
 
 
