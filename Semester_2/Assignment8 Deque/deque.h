@@ -494,11 +494,7 @@ public:
           }
           
           size_type newFront = (myData.myOff - 1) % (4 * myData.mapSize);
-          if (newFront % 4 == 3 && myData.mySize >= 4 * (myData.mapSize - 1))
-          {
-              doubleMapSize();
-              newFront = (myData.myOff - 1) % (4 * myData.mapSize);
-          }
+
           int row = newFront / 4;
           int col = newFront % 4;
           if (myData.map[row] == nullptr)
@@ -676,7 +672,7 @@ private:
        int map = myData.mapSize;
        myData.mapSize *= 2;
        //has to be modified by its overflowing
-      myData.myOff %= (4*myData.mapSize);
+      //myData.myOff %= (4*myData.mapSize);
        //start form myOff to (mySize+myOff)%(mapsize*4) for temp
        //from top to down quarterly-ish
        int j = myData.myOff / 4;
@@ -687,7 +683,7 @@ private:
            myData.map[j++] = temp[row++];*/
 
 
-       for (row = myData.myOff / 4; temp[row] != nullptr; )
+       for (row =( myData.myOff % (4 * map)) / 4; temp[row] != nullptr; )
        {
            
            myData.map[j++] = temp[row];
