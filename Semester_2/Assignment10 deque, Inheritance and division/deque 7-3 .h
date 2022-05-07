@@ -361,39 +361,22 @@ public:
    {
       if( &right != this ) // avoid self-assignment
       {
-          size_type originalOff = myData.myOff;
-          size_type originalSize = myData.mySize;
-          //cout << "original mapSize: " << myData.mapSize << endl;
-
-          
-          if ((originalSize + (myData.myOff % 4)-1)/4 == (right.myData.mySize-1)/4)
+          if (right.size() == 0)
           {
+              myData.myOff = 0;
               myData.mySize = 0;
-              for (const_iterator it = right.begin(); it != right.end(); it++) {
-                    value_type val = *it;
-
-                    size_type newBack = (myData.myOff + myData.mySize) % (4 * myData.mapSize);
-
-                    size_type row = getBlock(newBack);
-                    size_type col = newBack % 4;
-                    if (myData.map[row] == nullptr)
-                        myData.map[row] = new value_type[4]();
-                    myData.map[row][col] = val;
-
-
-                    myData.mySize++;
-              }
-          }
-          else
-          {
-              while (myData.mySize > 0)
-                  pop_back();
-              if(right.size() != 0)
-                  myData.myOff = originalOff;
-              for (const_iterator it = right.begin(); it != right.end(); it++)
-                  push_back(*it);
+              return *this;
           }
 
+
+        size_type size = (this->size() >= right.size()) ? right.size() : this->size();
+        const_iterator it1 = right.begin();
+        iterator it2 = this->begin();
+        for (int i = 0; i < size; i++, ++it1, ++it2)
+            *it2 = *it1;
+        for (; it1 != right.end(); ++it1)
+            push_back(*it1);
+        myData.mySize = right.size();
 
       }
 
