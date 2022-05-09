@@ -388,8 +388,12 @@ public:
    deque( const deque &right )
       : myData()
    {
-      for(iterator it = right.begin(); it != right.end(); ++it)
-         push_back(*it);
+       int j = right.myData.myOff;
+       for (int i = 0; i < right.myData.mySize; i++, j++)
+       {
+           j %= right.myData.mapSize * 4;
+           push_back(right.myData.map[right.getBlock(j)][j % 4]);
+       }
 
 
    }
@@ -402,12 +406,23 @@ public:
 
    // Assigns new contents to the container, replacing its current contents,
    // and modifying its size accordingly.
-   deque& operator=( const deque &right )
+   deque& operator=( const deque &right )//me
    {
       if( &right != this ) // avoid self-assignment
       {
-         
+         if(right.size() == 0)
+            myData.myOff = 0;
+         else{
+            size_type size = (this->size() >= right.size()) ? right.size() : this->size();
+            const_iterator it1(right.myData.myOff, &right.myData);
+            iterator it2 = this->begin();
+            for(int i = 0; i < size; i++, ++it1, ++it2)//this is the person that really think you are 
+               *it2 = *it1;
+            for(int i = size; i < right.size(); ++it1, ++i)
+               push_back(*it1);
+         }
 
+         myData.mySize = right.size();
 
       }
 
@@ -466,26 +481,39 @@ public:
    // insert element at end
    void push_back( const value_type &val )
    {
-      if( myData.mySize == 0 )
-      {
+       if (myData.mySize == 0)
+       {
+
+           if (myData.map == nullptr)
+           {
+               myData.map = new pointer[8]();
+               myData.mapSize = 8;
+           }
+           size_type newBack = (myData.myOff + myData.mySize) % (4 * myData.mapSize);
+           if (myData.map[getBlock(newBack)] == nullptr)
+               myData.map[getBlock(newBack)] = new value_type[4]();
+           myData.map[getBlock(newBack)][0] = val;
 
 
 
-      }
-      else
-      {
-         size_type newBack = ( myData.myOff + myData.mySize ) % ( 4 * myData.mapSize );
-         if( newBack % 4 == 0 && myData.mySize >= 4 * ( myData.mapSize - 1 ) )
-         {
-            doubleMapSize();
-            newBack = myData.myOff + myData.mySize;
-         }
-         else
+       }
+       else
+       {
+           size_type newBack = (myData.myOff + myData.mySize) % (4 * myData.mapSize);
+           if (newBack % 4 == 0 && myData.mySize >= 4 * (myData.mapSize - 1))
+           {        
+               doubleMapSize();
+               newBack = myData.myOff + myData.mySize;
+           }
+           else
+               myData.myOff %= myData.mapSize * 4;
 
+           if (myData.map[getBlock(newBack)] == nullptr)
+               myData.map[getBlock(newBack)] = new value_type[4]();
+           myData.map[getBlock(newBack)][newBack % 4] = val;
 
-
-      }
-
+       }
+       myData.mySize++;
 
 
    }
@@ -525,6 +553,14 @@ public:
       }
    }
 
+   void print() 
+   {
+       reverse_iterator it = rbegin();
+       for (; it != rend(); ++it)
+           cout << *it << " ";
+       cout << endl;
+   }
+
 private:
 
    // determine block from offset
@@ -537,9 +573,18 @@ private:
    void doubleMapSize()
    {
       MapPtr temp = myData.map;
-      myData.map = new pointer[myData.mapSize*2]();
+      myData.map = new pointer[myData.mapSize * 2]();
+      
+      int j = myData.myOff / 4, i = 0;
 
+      for (i = myData.myOff / 4; i < myData.mapSize; i++, j %= myData.mapSize * 2)
+          myData.map[j++] = temp[i];
 
+      for (i = 0; i < myData.myOff / 4; i++, j %= myData.mapSize * 2)
+          myData.map[j++] = temp[i];
+
+      myData.mapSize *= 2;
+      delete[]temp;
       
 
 
@@ -555,8 +600,8 @@ bool operator==( deque< Ty > &left, deque< Ty > &right )//me
 {
    if(left.size() != right.size())
       return false;
-   deque< Ty >::iterator it1 = left.begin();
-   deque< Ty >::iterator it2 = right.begin();
+   typename deque< Ty >::iterator it1 = left.begin();
+   typename deque< Ty >::iterator it2 = right.begin();
    for(; it1 != left.end(); ++it1, ++it2)
       if(*it1 != *it2)
          return false;
@@ -667,11 +712,11 @@ bool HugeInteger< T >::operator==( HugeInteger &right )
 template< typename T >
 bool HugeInteger< T >::operator<( HugeInteger &right )//me
 {
-   if(size() != right.size())
-      return size() < right.size();
-   typename HugeInteger::reverse_iterator it1 = rbegin();
+   if(this->size() != right.size())
+      return this->size() < right.size();
+   typename HugeInteger::reverse_iterator it1 = this->rbegin();
    typename HugeInteger::reverse_iterator it2 = right.rbegin();
-   for(; it1 != rend(); ++it1)
+   for(; it1 != this->rend(); ++it1, ++it2)
       if(*it1 != *it2)
          return *it1 < *it2;
    return false;
@@ -689,6 +734,9 @@ bool HugeInteger< T >::operator<=( HugeInteger &right )
 template< typename T >
 void HugeInteger< T >::operator-=( HugeInteger &op2 )//me
 {
+    //cout << "minus\n";
+    //this->print();
+    //op2.print();
    HugeInteger zero;
 
    if( *this == op2 )
@@ -703,11 +751,16 @@ void HugeInteger< T >::operator-=( HugeInteger &op2 )//me
    typename HugeInteger::iterator it2 = difference.begin();
    for(; it1 != op2.end(); ++it1, ++it2)
       *it2 -= *it1;
+   //difference.print();
 
    it2 = difference.begin();
-   for(; it2 != difference.end(); ++it2)
-      if(*it2 < 0 || *it2 > 1000)
-         *it2 += 10;
+   it1 = ++difference.begin();
+   for(; it1 != difference.end(); ++it2, ++it1)
+       if (*it2 < 0 || *it2 > 1000)
+       {
+           *it2 += 10;
+           *it1 -= 1;
+       }
 
    while(*(difference.rbegin()) == 0)
       difference.pop_back();
@@ -717,12 +770,15 @@ void HugeInteger< T >::operator-=( HugeInteger &op2 )//me
       cout << "difference has a leading zero!\n";
 
    *this = difference;
+   //this->print();
 } // end function operator-
 
 // multiplication operator; HugeInteger * HugeInteger
 template< typename T >
 void HugeInteger< T >::operator*=( HugeInteger &op2 )//me
-{
+{/*
+    cout << "product\n";
+    this->print();*/
    HugeInteger zero;
    if( isZero() || op2.isZero() )
    {
@@ -732,11 +788,11 @@ void HugeInteger< T >::operator*=( HugeInteger &op2 )//me
 
 	HugeInteger product( this->size() + op2.size() );
    
-   typename HugeInteger::iterator it1 = begin();
+   typename HugeInteger::iterator it1 = this->begin();
    typename HugeInteger::iterator it2 = op2.begin();
    typename HugeInteger::iterator it3 = product.begin();
    typename HugeInteger::iterator it4 = product.begin();
-   for(; it1 != end(); ++it1)
+   for(; it1 != this->end(); ++it1)
    {
       it4 = it3;
       for(it2 = op2.begin(); it2 != op2.end(); ++it2, ++it4)
@@ -755,7 +811,7 @@ void HugeInteger< T >::operator*=( HugeInteger &op2 )//me
          *it5 %= 10;
       }
 
-   while(*(product.rbegin()) == 0)
+   while(product.leadingZero())
       product.pop_back();
 
 
@@ -763,45 +819,55 @@ void HugeInteger< T >::operator*=( HugeInteger &op2 )//me
       cout << "product has a leading zero!\n";
 
    *this = product;
+   //this->print();
 } // end function operator*
 
 // division operator; HugeInteger / HugeInteger provided that the divisor is not equal to 0
 template< typename T >
 HugeInteger< T > HugeInteger< T >::operator/( HugeInteger &op2 )//me
-{
+{/*
+    cout << "division\n";
+    this->print();
+    op2.print();*/
    HugeInteger zero;
    if( *this < op2 )
       return zero;
 
-   HugeInteger remainder( op2 );
-   HugeInteger quotient(size() - op2.size());
+   HugeInteger remainder( *this );
+   HugeInteger quotient(this->size() - op2.size());
    HugeInteger ten(2);
    ten.convert(10);
 
    HugeInteger buffer( op2 );
-   buffer.power(ten, size() - op2.size());
-
-   if(buffer < remainder)
+   //buffer.power(ten, this->size() - op2.size());
+   for (int i = 0; i < this->size() - op2.size(); i++)
+       buffer *= ten;
+   //buffer.print();
+   if(remainder < buffer)
       buffer.divideByTen();
    else
-      quotient.resize(size() - op2.size() + 1);
+      quotient.resize(this->size() - op2.size() + 1);
    
    typename HugeInteger::reverse_iterator it1 = quotient.rbegin();
-   while(op2 <= remainder)
+   for (int k = quotient.size() - 1; k >= 0; k--)
    {
-      while(buffer < remainder)
+      while(buffer <= remainder)
       {
          remainder -= buffer;
          (*it1)++;
+         //quotient.print();
+         if (remainder.isZero()){
+             //quotient.print();
+             return quotient;
+         }
       }
       ++it1;
       buffer.divideByTen();
    }
 
-   if(*quotient.rbegin() == 0)
-      pop_back();
 
 
+   //quotient.print();
    return quotient;
 } // end function operator/
 
