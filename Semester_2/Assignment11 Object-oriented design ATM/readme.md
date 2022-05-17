@@ -1,7 +1,9 @@
 
-Computer Programming II — Homework Assignment #11
+## Computer Programming II — Homework Assignment #11
 
-Implement an ATM system whose requirements document is the same as that in Assignment #10. Your program must contain six classes: Account, BalanceInquiry, Deposit, Withdrawal, Transaction and BankDatabase defined in Account.h, BalanceInquiry.h, Deposit.h, Withdrawal.h, Transaction.h and BankDatabase.h respectively.
+
+**Implement an ATM system whose requirements document is the same as that in Assignment #10. Your program must contain six classes: Account, BalanceInquiry, Deposit, Withdrawal, Transaction and BankDatabase defined in Account.h, BalanceInquiry.h, Deposit.h, Withdrawal.h, Transaction.h and BankDatabase.h respectively.**
+
 
 The record format of the binary file Accounts.dat:
    int accountNumber; // account number
@@ -9,7 +11,7 @@ The record format of the binary file Accounts.dat:
    double availableBalance; // funds available for withdrawal
    double totalBalance; // funds available + funds waiting to clear 
 
-
+```
 The screen dialog #1:
 
 Welcome!
@@ -327,4 +329,4 @@ Thank you! Goodbye!
 Welcome!
 
 Please enter your account number:
-
+```
