@@ -6,7 +6,7 @@ using namespace std;
 
 class Account;
 vector<Account>accounts;
- 
+
 class Account {
 public:
 	string account_num;
@@ -14,7 +14,7 @@ public:
 	double availBalance;
 	double totalBalance;
 
-	Account() 
+	Account()
 		:account_num(),
 		pin(),
 		availBalance(),
@@ -30,7 +30,7 @@ public:
 	{
 	}
 
-	bool isVaild() 
+	bool isVaild()
 	{
 		for (Account i : accounts)
 		{
@@ -40,7 +40,7 @@ public:
 		return false;
 	}
 
-	double findAccountAvail() 
+	double findAccountAvail()
 	{
 		for (Account i : accounts)
 		{
@@ -50,7 +50,7 @@ public:
 		return -1;
 	}
 
-	double findAccountTotal() 
+	double findAccountTotal()
 	{
 		for (Account i : accounts)
 		{
@@ -127,7 +127,7 @@ public:
 	void withdraw()
 	{
 		int option;
-		int bill[6] = { 0,20,40,60,100,200};
+		int bill[6] = { 0,20,40,60,100,200 };
 		do {
 			cout << endl;
 			cout << "1 - $20 " << "  " << "2 - $40" << endl << endl;;
@@ -191,7 +191,7 @@ public:
 
 	void login()
 	{
-		
+
 		do {
 			cout << "Welcome" << endl << endl;;
 			cout << "Please enter your account number : ";
@@ -216,6 +216,13 @@ public:
 	void logout()
 	{
 		sign = 0;
+
+		for(Account& i : accounts)
+			if (i.account_num == myData.account_num)
+			{
+				i.totalBalance = myData.totalBalance;
+				i.availBalance = myData.availBalance;
+			}
 	}
 
 	bool isLogin()
@@ -226,13 +233,13 @@ public:
 
 int main() {
 	ATM atm;
-	
+
 	Account user1("12345", "54321", 1000, 1200);
 	Account user2("98765", "56789", 200, 200);
 	accounts.push_back(user1);
 	accounts.push_back(user2);
 
-	
+
 	while (1)
 	{
 		if (atm.isLogin())
